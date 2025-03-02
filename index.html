@@ -5,10 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>spkn.fun - Image Hosting</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-label {
+            display: block;
+            padding: 10px;
+            background: #ff5722;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border: none;
+            background: #ff9800;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #e68900;
+        }
+        #preview img {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        #links {
+            margin-top: 10px;
+            word-wrap: break-word;
+        }
+        a {
+            color: #ffcc80;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>spkn.fun - Upload & Share Images</h1>
+        <label for="imageUpload" class="upload-label">Choose an Image</label>
         <input type="file" id="imageUpload" accept="image/*">
         <button onclick="uploadImage()">Upload</button>
         <div id="preview"></div>
