@@ -124,6 +124,7 @@
     const selectedFormat = document.querySelector('.selected').id;
 
     if (url) {
+        // Update regex to match YouTube URLs
         const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|playlist\?list=)[a-zA-Z0-9_-]+|youtu\.be\/[a-zA-Z0-9_-]+)$/;
         const match = url.match(youtubeRegex);
 
@@ -132,7 +133,7 @@
             return;
         }
 
-        const downloadUrl = `http://localhost:5000/download?url=${encodeURIComponent(url)}&format=${selectedFormat}`;
+        const downloadUrl = `https://triangular-vintage-blizzard.glitch.me/download?url=${encodeURIComponent(url)}&format=${selectedFormat}`;
 
         window.location.href = downloadUrl;
     } else {
