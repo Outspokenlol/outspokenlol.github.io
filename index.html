@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Clone</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="header__left">
+        <div class="header__menu">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div class="header__logo">
+          <img
+            src="images/youtube-logo.png"
+            alt="YouTube Logo"
+            class="header__logo-img"
+          />
+        </div>
+      </div>
+
+      <div class="header__search">
+        <form class="search-bar">
+          <input type="text" class="search-input" placeholder="Search" />
+          <button class="search-btn">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+      </div>
+
+      <div class="header__icons">
+        <div class="header__icon">
+          <i class="fas fa-video"></i>
+        </div>
+        <div class="header__icon">
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="header__icon">
+          <img src="images/Avatar.png" alt="User Avatar" class="avatar" />
+        </div>
+      </div>
+    </header>
+
+    <nav class="sidebar">
+      <div class="sidebar__section">
+        <div class="sidebar__item active">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+        </div>
+        <div class="sidebar__item">
+          <i class="fas fa-compass"></i>
+          <span>Explore</span>
+        </div>
+        <div class="sidebar__item">
+          <i class="fas fa-play-circle"></i>
+          <span>Shorts</span>
+        </div>
+        <div class="sidebar__item">
+          <i class="fas fa-subscription"></i>
+          <span>Subscriptions</span>
+        </div>
+      </div>
+
+      <div class="sidebar__section">
+        <div class="sidebar__item">
+          <i class="fas fa-photo-video"></i>
+          <span>Library</span>
+        </div>
+        <div class="sidebar__item">
+          <i class="fas fa-history"></i>
+          <span>History</span>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="categories">
+        <div class="category active">All</div>
+        <div class="category">Music</div>
+        <div class="category">Gaming</div>
+        <div class="category">Live</div>
+        <div class="category">News</div>
+        <div class="category">Sports</div>
+        <div class="category">Learning</div>
+        <div class="category">Fashion</div>
+      </div>
+
+      <div class="videos">
+        <!-- Video cards will be dynamically generated -->
+      </div>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
