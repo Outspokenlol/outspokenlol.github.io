@@ -353,6 +353,66 @@
             background-color: var(--text-primary);
             border-radius: 2px;
         }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--text-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Search results */
+        .search-results {
+            margin-top: 20px;
+        }
+
+        .result-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .result-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .result-tab.active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .result-content {
+            display: none;
+        }
+
+        .result-content.active {
+            display: block;
+        }
+
+        /* Loading state */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        /* Error message */
+        .error-message {
+            color: var(--accent);
+            padding: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -379,19 +439,33 @@
             <button id="search-btn">Search</button>
         </div>
         
-        <h1 class="page-title">Popular Right Now</h1>
-        <div class="card-grid" id="featured-songs">
-            <!-- Featured songs will load here -->
+        <div id="home-page">
+            <h1 class="page-title">Popular Right Now</h1>
+            <div class="card-grid" id="featured-songs">
+                <div class="loading">
+                    <span class="spinner"></span>
+                </div>
+            </div>
         </div>
         
-        <h1 class="page-title">New Releases</h1>
-        <div class="card-grid" id="new-releases">
-            <!-- New releases will load here -->
-        </div>
-        
-        <h1 class="page-title">Recommended For You</h1>
-        <div class="card-grid" id="recommendations">
-            <!-- Recommendations will load here -->
+        <div id="search-page" style="display: none;">
+            <div class="search-results">
+                <div class="result-tabs">
+                    <div class="result-tab active" data-tab="songs">Songs</div>
+                    <div class="result-tab" data-tab="artists">Artists</div>
+                </div>
+                
+                <div class="result-content active" id="songs-results">
+                    <div class="card-grid" id="search-songs-results">
+                        <p style="padding: 20px; color: var(--text-secondary);">Search for music to see results</p>
+                    </div>
+                </div>
+                <div class="result-content" id="artists-results">
+                    <div class="card-grid" id="search-artists-results">
+                        <p style="padding: 20px; color: var(--text-secondary);">Search for artists to see results</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -441,57 +515,8 @@
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // Sample music data (YouTube video IDs)
-        const musicLibrary = [
-            {
-                id: 'dQw4w9WgXcQ',
-                title: 'Never Gonna Give You Up',
-                artist: 'Rick Astley',
-                album: 'Whenever You Need Somebody',
-                duration: 213,
-                cover: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg'
-            },
-            {
-                id: '9bZkp7q19f0',
-                title: 'Gangnam Style',
-                artist: 'PSY',
-                album: 'PSY 6 (Six Rules), Part 1',
-                duration: 252,
-                cover: 'https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg'
-            },
-            {
-                id: 'JGwWNGJdvx8',
-                title: 'Shape of You',
-                artist: 'Ed Sheeran',
-                album: '÷',
-                duration: 234,
-                cover: 'https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg'
-            },
-            {
-                id: 'kJQP7kiw5Fk',
-                title: 'Despacito',
-                artist: 'Luis Fonsi ft. Daddy Yankee',
-                album: 'VIDA',
-                duration: 229,
-                cover: 'https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg'
-            },
-            {
-                id: 'RgKAFK5djSk',
-                title: 'See You Again',
-                artist: 'Wiz Khalifa ft. Charlie Puth',
-                album: 'Furious 7: Original Motion Picture Soundtrack',
-                duration: 229,
-                cover: 'https://i.ytimg.com/vi/RgKAFK5djSk/hqdefault.jpg'
-            },
-            {
-                id: 'OPf0YbXqDm0',
-                title: 'Uptown Funk',
-                artist: 'Mark Ronson ft. Bruno Mars',
-                album: 'Uptown Special',
-                duration: 270,
-                cover: 'https://i.ytimg.com/vi/OPf0YbXqDm0/hqdefault.jpg'
-            }
-        ];
+        // YouTube Data API Key (WARNING: This should not be exposed in production)
+        const YOUTUBE_API_KEY = 'AIzaSyA5w77R6WgrQuLeVb8WyG5wyEcp13eNuJ8';
 
         class MusicPlayer {
             constructor() {
@@ -503,9 +528,10 @@
                 this.queue = [];
                 this.currentIndex = 0;
                 this.progressInterval = null;
+                this.searchResults = {};
                 
                 this.setupEventListeners();
-                this.loadInitialTracks();
+                this.loadPopularTracks();
             }
             
             onYouTubeIframeAPIReady() {
@@ -560,18 +586,81 @@
                 document.getElementById('search-input').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.search();
                 });
+                
+                // Navigation buttons
+                document.querySelectorAll('.nav-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const page = button.getAttribute('data-page');
+                        this.showPage(page);
+                    });
+                });
+                
+                // Search tabs
+                document.querySelectorAll('.result-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.getAttribute('data-tab');
+                        this.showSearchTab(tabName);
+                    });
+                });
             }
             
-            loadInitialTracks() {
-                this.queue = [...musicLibrary];
-                this.renderTracks('featured-songs', musicLibrary);
-                this.renderTracks('new-releases', [...musicLibrary].reverse());
-                this.renderTracks('recommendations', [...musicLibrary].sort(() => 0.5 - Math.random()).slice(0, 4));
+            showPage(page) {
+                document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`.nav-button[data-page="${page}"]`).classList.add('active');
+                
+                document.getElementById('home-page').style.display = 'none';
+                document.getElementById('search-page').style.display = 'none';
+                
+                if (page === 'home') {
+                    document.getElementById('home-page').style.display = 'block';
+                } else if (page === 'search') {
+                    document.getElementById('search-page').style.display = 'block';
+                }
+            }
+            
+            showSearchTab(tabName) {
+                document.querySelectorAll('.result-tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector(`.result-tab[data-tab="${tabName}"]`).classList.add('active');
+                
+                document.querySelectorAll('.result-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabName}-results`).classList.add('active');
+            }
+            
+            async loadPopularTracks() {
+                try {
+                    // Search for popular music on YouTube
+                    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=6&q=popular+music&type=video&key=${YOUTUBE_API_KEY}`);
+                    const data = await response.json();
+                    
+                    if (!data.items || data.items.length === 0) {
+                        throw new Error('No popular tracks found');
+                    }
+                    
+                    const tracks = data.items.map(item => ({
+                        id: item.id.videoId,
+                        title: item.snippet.title,
+                        artist: item.snippet.channelTitle,
+                        cover: item.snippet.thumbnails.high.url,
+                        duration: 180 // Default duration (will be updated when played)
+                    }));
+                    
+                    this.queue = [...tracks];
+                    this.renderTracks('featured-songs', tracks);
+                } catch (error) {
+                    console.error('Error loading popular tracks:', error);
+                    document.getElementById('featured-songs').innerHTML = 
+                        '<div class="error-message">Failed to load popular tracks</div>';
+                }
             }
             
             renderTracks(elementId, tracks) {
                 const container = document.getElementById(elementId);
                 container.innerHTML = '';
+                
+                if (!tracks || tracks.length === 0) {
+                    container.innerHTML = '<p style="padding: 20px; color: var(--text-secondary);">No tracks found</p>';
+                    return;
+                }
                 
                 tracks.forEach((track, index) => {
                     const trackElement = document.createElement('div');
@@ -602,12 +691,42 @@
                 document.getElementById('now-playing-artist').textContent = track.artist;
                 document.getElementById('now-playing-image').style.backgroundImage = `url('${track.cover}')`;
                 document.getElementById('now-playing-image').textContent = '';
-                document.getElementById('duration').textContent = this.formatTime(track.duration);
+                
+                // Get actual duration from YouTube
+                this.updateTrackDuration(track.id);
+            }
+            
+            async updateTrackDuration(videoId) {
+                try {
+                    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`);
+                    const data = await response.json();
+                    
+                    if (data.items && data.items.length > 0) {
+                        const durationStr = data.items[0].contentDetails.duration;
+                        const duration = this.parseYouTubeDuration(durationStr);
+                        this.currentTrack.duration = duration;
+                        document.getElementById('duration').textContent = this.formatTime(duration);
+                    }
+                } catch (error) {
+                    console.error('Error getting video duration:', error);
+                    document.getElementById('duration').textContent = '0:00';
+                }
+            }
+            
+            parseYouTubeDuration(durationStr) {
+                // Parse ISO 8601 duration format (e.g., PT1M33S)
+                const match = durationStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+                const hours = parseInt(match[1] || '0');
+                const minutes = parseInt(match[2] || '0');
+                const seconds = parseInt(match[3] || '0');
+                return hours * 3600 + minutes * 60 + seconds;
             }
             
             togglePlay() {
                 if (!this.currentTrack) {
-                    this.playTrack(this.queue[0], 0);
+                    if (this.queue.length > 0) {
+                        this.playTrack(this.queue[0], 0);
+                    }
                     return;
                 }
                 
@@ -716,20 +835,109 @@
                 return `${mins}:${secs < 10 ? '0' + secs : secs}`;
             }
             
-            search() {
-                const query = document.getElementById('search-input').value.toLowerCase();
+            async search() {
+                const query = document.getElementById('search-input').value.trim();
                 if (!query) return;
                 
-                const results = musicLibrary.filter(track => 
-                    track.title.toLowerCase().includes(query) || 
-                    track.artist.toLowerCase().includes(query) ||
-                    track.album.toLowerCase().includes(query)
-                );
+                // Show loading state
+                const searchBtn = document.getElementById('search-btn');
+                const originalText = searchBtn.textContent;
+                searchBtn.innerHTML = '<span class="spinner"></span>';
                 
-                this.renderTracks('featured-songs', results);
-                document.getElementById('new-releases').innerHTML = '';
-                document.getElementById('recommendations').innerHTML = '';
-                document.querySelector('.page-title').textContent = `Search Results for "${query}"`;
+                try {
+                    // Search YouTube for music videos
+                    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(query)}+music&type=video&key=${YOUTUBE_API_KEY}`);
+                    const data = await response.json();
+                    
+                    if (!data.items || data.items.length === 0) {
+                        throw new Error('No results found');
+                    }
+                    
+                    // Process search results
+                    const songResults = data.items.map(item => ({
+                        id: item.id.videoId,
+                        title: item.snippet.title,
+                        artist: item.snippet.channelTitle,
+                        cover: item.snippet.thumbnails.high.url,
+                        duration: 180 // Will be updated when played
+                    }));
+                    
+                    // Get unique artists from results
+                    const artistResults = [...new Set(songResults.map(track => ({
+                        id: track.artist.toLowerCase().replace(/\s+/g, '-'),
+                        name: track.artist,
+                        image: track.cover
+                    })))];
+                    
+                    this.searchResults = {
+                        songs: songResults,
+                        artists: artistResults
+                    };
+                    
+                    // Render results
+                    this.renderSearchResults();
+                    
+                    // Show search page
+                    this.showPage('search');
+                    this.showSearchTab('songs');
+                    
+                } catch (error) {
+                    console.error('Search error:', error);
+                    const songsContainer = document.getElementById('search-songs-results');
+                    songsContainer.innerHTML = '<div class="error-message">Failed to load search results</div>';
+                } finally {
+                    // Restore search button
+                    searchBtn.textContent = originalText;
+                }
+            }
+            
+            renderSearchResults() {
+                // Render songs
+                const songsContainer = document.getElementById('search-songs-results');
+                songsContainer.innerHTML = '';
+                
+                if (this.searchResults.songs.length === 0) {
+                    songsContainer.innerHTML = '<p style="padding: 20px; color: var(--text-secondary);">No songs found</p>';
+                } else {
+                    this.searchResults.songs.forEach((track, index) => {
+                        const trackElement = document.createElement('div');
+                        trackElement.className = 'song-card';
+                        trackElement.innerHTML = `
+                            <div class="song-image" style="background-image: url('${track.cover}')"></div>
+                            <div class="song-title">${track.title}</div>
+                            <div class="song-artist">${track.artist}</div>
+                        `;
+                        trackElement.addEventListener('click', () => {
+                            this.queue = this.searchResults.songs;
+                            this.playTrack(track, index);
+                        });
+                        songsContainer.appendChild(trackElement);
+                    });
+                }
+                
+                // Render artists
+                const artistsContainer = document.getElementById('search-artists-results');
+                artistsContainer.innerHTML = '';
+                
+                if (this.searchResults.artists.length === 0) {
+                    artistsContainer.innerHTML = '<p style="padding: 20px; color: var(--text-secondary);">No artists found</p>';
+                } else {
+                    this.searchResults.artists.forEach(artist => {
+                        const artistElement = document.createElement('div');
+                        artistElement.className = 'song-card';
+                        artistElement.innerHTML = `
+                            <div class="song-image" style="background-image: url('${artist.image}')"></div>
+                            <div class="song-title">${artist.name}</div>
+                            <div class="song-artist">Artist</div>
+                        `;
+                        artistElement.addEventListener('click', () => {
+                            // Search for songs by this artist
+                            document.getElementById('search-input').value = artist.name;
+                            this.search();
+                        });
+                        artistsContainer.appendChild(artistElement);
+                    });
+                }
             }
         }
 
@@ -737,17 +945,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             window.player = new MusicPlayer();
             window.onYouTubeIframeAPIReady = () => player.onYouTubeIframeAPIReady();
-            
-            // Navigation buttons
-            document.querySelectorAll('.nav-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const page = this.getAttribute('data-page');
-                    // In a real app, you would handle page navigation here
-                });
-            });
         });
     </script>
 </body>
