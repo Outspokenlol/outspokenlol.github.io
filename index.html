@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Simple Ghost AI Chat</title>
+<title>Ghost AI Voice Chat</title>
 <style>
   body {
     background: #000;
@@ -42,51 +42,42 @@
     color: #0f0;
     text-align: left;
   }
-  #inputArea {
+  #controls {
     display: flex;
-    width: 400px;
+    gap: 10px;
+    margin-bottom: 10px;
   }
-  #userInput {
-    flex-grow: 1;
-    padding: 10px;
-    font-size: 1rem;
-    background: #222;
-    border: none;
-    color: #0f0;
-    border-radius: 4px 0 0 4px;
-    outline: none;
-  }
-  #sendBtn {
+  button {
     padding: 10px 15px;
     background: #0f0;
     border: none;
     color: #000;
     font-weight: bold;
     cursor: pointer;
-    border-radius: 0 4px 4px 0;
+    border-radius: 6px;
     user-select: none;
   }
-  #sendBtn:hover {
+  button:hover {
     background: #3f3;
   }
 </style>
 </head>
 <body>
 
-<h1>Ghost AI Chat</h1>
+<h1>Ghost AI Voice Chat</h1>
 <div id="chat"></div>
 
-<div id="inputArea">
-  <input type="text" id="userInput" placeholder="Say something..." autocomplete="off" />
-  <button id="sendBtn">Send</button>
+<div id="controls">
+  <button id="startBtn">Start Listening</button>
+  <button id="stopBtn" disabled>Stop Listening</button>
 </div>
 
 <script>
   const chat = document.getElementById('chat');
-  const userInput = document.getElementById('userInput');
-  const sendBtn = document.getElementById('sendBtn');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
 
-  // Simple keyword-response pairs for natural short replies
+  // Simple keyword-response pairs
   const responses = [
     { keywords: ["where are you", "where r u", "location"], answer: "In a field" },
     { keywords: ["who are you", "your name"], answer: "I'm just a wandering spirit" },
@@ -106,15 +97,12 @@
     { keywords: ["can you speak"], answer: "Here I am speaking to you" },
     { keywords: ["thank you"], answer: "You're welcome" },
     { keywords: ["how do I leave"], answer: "Close your eyes and breathe" },
-    { keywords: ["what time is it"], answer: new Date().toLocaleTimeString() },
+    { keywords: ["what time is it"], answer: () => new Date().toLocaleTimeString() },
     { keywords: ["default"], answer: "I don't understand that" }
   ];
 
   function botReply(text) {
-    // Lowercase input for matching
     const input = text.toLowerCase();
-
-    // Find a response where any keyword matches input
     for (const resp of responses) {
       for (const kw of resp.keywords) {
         if (input.includes(kw)) {
@@ -122,19 +110,7 @@
         }
       }
     }
-
-    // If no keywords matched, return default
     return "I don't understand that";
-  }
-
-  function speak(text) {
-    if (!('speechSynthesis' in window)) return;
-    // Cancel any ongoing speech to avoid overlap
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'en-US';
-    utter.rate = 1;
-    window.speechSynthesis.speak(utter);
   }
 
   function addMessage(text, sender) {
@@ -145,20 +121,57 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
-  function handleInput() {
-    const text = userInput.value.trim();
-    if (!text) return;
-    addMessage(text, 'user');
-    userInput.value = '';
-
-    const reply = botReply(text);
-    addMessage(reply, 'bot');
-    speak(reply);
+  function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'en-US';
+    utter.rate = 1;
+    window.speechSynthesis.speak(utter);
   }
 
-  sendBtn.addEventListener('click', handleInput);
-  userInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleInput();
+  // Speech Recognition setup
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Speech Recognition API not supported in this browser. Use Chrome or Edge.');
+  }
+
+  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition?.addEventListener('result', e => {
+    const transcript = e.results[0][0].transcript.trim();
+    addMessage(transcript, 'user');
+    const reply = botReply(transcript);
+    addMessage(reply, 'bot');
+    speak(reply);
+  });
+
+  recognition?.addEventListener('end', () => {
+    // Auto restart to keep listening, unless stopped by user
+    if (listening) recognition.start();
+  });
+
+  let listening = false;
+
+  startBtn.addEventListener('click', () => {
+    if (!recognition) return;
+    recognition.start();
+    listening = true;
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    addMessage("Listening...", "bot");
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (!recognition) return;
+    recognition.stop();
+    listening = false;
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    addMessage("Stopped listening.", "bot");
   });
 </script>
 
