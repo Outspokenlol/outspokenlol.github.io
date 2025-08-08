@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ghost Radar</title>
+<title>Simple Ghost AI Chat</title>
 <style>
   body {
     background: #000;
     color: #0f0;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier New', monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,138 +20,146 @@
     margin-bottom: 20px;
     text-shadow: 0 0 8px #0f0;
   }
-  .radar {
-    position: relative;
-    width: 300px;
+  #chat {
+    width: 400px;
+    background: #111;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px #0f0;
     height: 300px;
-    border: 3px solid #0f0;
-    border-radius: 50%;
-    box-shadow: 0 0 20px #0f0;
-    overflow: hidden;
+    overflow-y: auto;
+    margin-bottom: 10px;
   }
-  .sweep {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 255, 0, 0.15);
-    border-radius: 50%;
-    transform-origin: center center;
-    animation: sweep 5s linear infinite;
+  .message {
+    margin-bottom: 12px;
+    line-height: 1.4;
   }
-  @keyframes sweep {
-    0% {
-      transform: rotate(0deg);
-      opacity: 1;
-    }
-    100% {
-      transform: rotate(360deg);
-      opacity: 0;
-    }
+  .user {
+    color: #6f6;
+    text-align: right;
   }
-  .blip {
-    position: absolute;
+  .bot {
+    color: #0f0;
+    text-align: left;
+  }
+  #inputArea {
+    display: flex;
+    width: 400px;
+  }
+  #userInput {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1rem;
+    background: #222;
+    border: none;
+    color: #0f0;
+    border-radius: 4px 0 0 4px;
+    outline: none;
+  }
+  #sendBtn {
+    padding: 10px 15px;
     background: #0f0;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #0f0;
-  }
-  #message {
-    margin-top: 40px;
-    font-size: 2rem;
-    min-height: 2em;
+    border: none;
+    color: #000;
     font-weight: bold;
-    text-shadow: 0 0 15px #0f0;
-    letter-spacing: 3px;
+    cursor: pointer;
+    border-radius: 0 4px 4px 0;
+    user-select: none;
+  }
+  #sendBtn:hover {
+    background: #3f3;
   }
 </style>
 </head>
 <body>
 
-<h1>Ghost Radar</h1>
-<div class="radar" id="radar">
-  <div class="sweep"></div>
+<h1>Ghost AI Chat</h1>
+<div id="chat"></div>
+
+<div id="inputArea">
+  <input type="text" id="userInput" placeholder="Say something..." autocomplete="off" />
+  <button id="sendBtn">Send</button>
 </div>
-<div id="message">Ask your question...</div>
 
 <script>
-  const radar = document.getElementById('radar');
-  const message = document.getElementById('message');
+  const chat = document.getElementById('chat');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
 
-  // List of short answer-like words
-  const answers = [
-    "Yes", "No", "Didn't", "Maybe", "Never", "Always", "Sure", "Nope", "Possibly", "Likely",
-    "Unlikely", "Absolutely", "Doubtful", "Certainly", "Not", "Probably", "Maybe not", "Affirmative",
-    "Negative", "Correct", "Wrong", "Certainly not", "Of course", "No way", "Yup", "Nah",
-    "Without a doubt", "Ask again", "Uncertain", "Definitely", "No chance", "Surely", "Perhaps",
-    "No idea", "Try later", "Inconclusive", "Positive", "Negative", "Confirmed", "Denied",
-    "Possibility", "Impossible", "Think so", "Don't think so", "Yessir", "No sir", "Affirmed"
+  // Simple keyword-response pairs for natural short replies
+  const responses = [
+    { keywords: ["where are you", "where r u", "location"], answer: "In a field" },
+    { keywords: ["who are you", "your name"], answer: "I'm just a wandering spirit" },
+    { keywords: ["hello", "hi", "hey"], answer: "Hello there" },
+    { keywords: ["are you real"], answer: "I like to think so" },
+    { keywords: ["can you help me"], answer: "I'll try my best" },
+    { keywords: ["what do you want"], answer: "To be heard" },
+    { keywords: ["are you friendly"], answer: "Yes, don't be afraid" },
+    { keywords: ["how old are you"], answer: "Older than you can imagine" },
+    { keywords: ["goodbye", "bye"], answer: "See you around" },
+    { keywords: ["what is this"], answer: "A place between worlds" },
+    { keywords: ["why are you here"], answer: "To whisper secrets" },
+    { keywords: ["tell me a secret"], answer: "Sometimes silence says it all" },
+    { keywords: ["are there ghosts"], answer: "You just talked to one" },
+    { keywords: ["do you see me"], answer: "Only your words" },
+    { keywords: ["are you scared"], answer: "No, I am calm" },
+    { keywords: ["can you speak"], answer: "Here I am speaking to you" },
+    { keywords: ["thank you"], answer: "You're welcome" },
+    { keywords: ["how do I leave"], answer: "Close your eyes and breathe" },
+    { keywords: ["what time is it"], answer: new Date().toLocaleTimeString() },
+    { keywords: ["default"], answer: "I don't understand that" }
   ];
 
-  // Keep track of last 10 to avoid repeats
-  const recentAnswers = [];
+  function botReply(text) {
+    // Lowercase input for matching
+    const input = text.toLowerCase();
 
-  function placeBlips() {
-    const oldBlips = document.querySelectorAll('.blip');
-    oldBlips.forEach(b => b.remove());
-
-    const radarRect = radar.getBoundingClientRect();
-    const blipCount = Math.floor(Math.random() * 7) + 3;
-    for(let i = 0; i < blipCount; i++) {
-      const blip = document.createElement('div');
-      blip.classList.add('blip');
-      let x, y;
-      do {
-        x = Math.random() * radarRect.width;
-        y = Math.random() * radarRect.height;
-      } while (!isInsideCircle(x, y, radarRect.width / 2));
-      blip.style.left = `${x - 4}px`;
-      blip.style.top = `${y - 4}px`;
-      radar.appendChild(blip);
+    // Find a response where any keyword matches input
+    for (const resp of responses) {
+      for (const kw of resp.keywords) {
+        if (input.includes(kw)) {
+          return typeof resp.answer === "function" ? resp.answer() : resp.answer;
+        }
+      }
     }
-  }
 
-  function isInsideCircle(x, y, r) {
-    const dx = x - r;
-    const dy = y - r;
-    return dx * dx + dy * dy <= r * r;
-  }
-
-  function getRandomAnswer() {
-    let answer;
-    let attempts = 0;
-    do {
-      answer = answers[Math.floor(Math.random() * answers.length)];
-      attempts++;
-    } while (recentAnswers.includes(answer) && attempts < 20);
-
-    recentAnswers.push(answer);
-    if (recentAnswers.length > 10) {
-      recentAnswers.shift();
-    }
-    return answer;
+    // If no keywords matched, return default
+    return "I don't understand that";
   }
 
   function speak(text) {
     if (!('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1;
-    window.speechSynthesis.speak(utterance);
+    // Cancel any ongoing speech to avoid overlap
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'en-US';
+    utter.rate = 1;
+    window.speechSynthesis.speak(utter);
   }
 
-  function showNewAnswer() {
-    const answer = getRandomAnswer();
-    message.textContent = answer;
-    speak(answer);
+  function addMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.classList.add('message', sender);
+    msg.textContent = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
   }
 
-  placeBlips();
-  showNewAnswer();
+  function handleInput() {
+    const text = userInput.value.trim();
+    if (!text) return;
+    addMessage(text, 'user');
+    userInput.value = '';
 
-  setInterval(placeBlips, 5000);
-  setInterval(showNewAnswer, 20000);
+    const reply = botReply(text);
+    addMessage(reply, 'bot');
+    speak(reply);
+  }
+
+  sendBtn.addEventListener('click', handleInput);
+  userInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleInput();
+  });
 </script>
 
 </body>
