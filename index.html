@@ -102,28 +102,33 @@
     window.speechSynthesis.speak(utterance);
   }
 
-  // Your OpenAI API key here — IMPORTANT: don't expose your key in public code!
-  const OPENAI_API_KEY = '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';
+  // Replace this with your own OpenAI API key:
+  const OPENAI_API_KEY = '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';
 
   async function queryOpenAI(prompt) {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // or 'gpt-4' if you have access
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 100,
-        temperature: 0.7,
-      })
-    });
-    const data = await res.json();
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content.trim();
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 100,
+          temperature: 0.7,
+        })
+      });
+      const data = await res.json();
+      if (data.choices && data.choices.length > 0) {
+        return data.choices[0].message.content.trim();
+      }
+      return "Sorry, I didn't get that.";
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return "Sorry, something went wrong.";
     }
-    return "Sorry, I didn't get that.";
   }
 </script>
 
