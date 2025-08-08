@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ghost AI Voice Chat</title>
+<title>AI Ghost Chat with Voice</title>
 <style>
   body {
     background: #000;
     color: #0f0;
-    font-family: 'Courier New', monospace;
+    font-family: monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -16,163 +16,115 @@
     height: 100vh;
     margin: 0;
   }
-  h1 {
-    margin-bottom: 20px;
-    text-shadow: 0 0 8px #0f0;
-  }
   #chat {
     width: 400px;
-    background: #111;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 15px #0f0;
     height: 300px;
     overflow-y: auto;
-    margin-bottom: 10px;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px #0f0;
+    margin-bottom: 15px;
   }
   .message {
-    margin-bottom: 12px;
-    line-height: 1.4;
+    margin: 8px 0;
   }
   .user {
-    color: #6f6;
     text-align: right;
+    color: #6f6;
   }
   .bot {
-    color: #0f0;
     text-align: left;
   }
-  #controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
   button {
-    padding: 10px 15px;
+    padding: 10px 20px;
     background: #0f0;
     border: none;
-    color: #000;
+    border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
-    border-radius: 6px;
-    user-select: none;
-  }
-  button:hover {
-    background: #3f3;
   }
 </style>
 </head>
 <body>
 
-<h1>Ghost AI Voice Chat</h1>
+<h1>AI Ghost Chat (Voice)</h1>
 <div id="chat"></div>
-
-<div id="controls">
-  <button id="startBtn">Start Listening</button>
-  <button id="stopBtn" disabled>Stop Listening</button>
-</div>
+<button id="startBtn">Start Listening</button>
 
 <script>
   const chat = document.getElementById('chat');
   const startBtn = document.getElementById('startBtn');
-  const stopBtn = document.getElementById('stopBtn');
 
-  // Simple keyword-response pairs
-  const responses = [
-    { keywords: ["where are you", "where r u", "location"], answer: "In a field" },
-    { keywords: ["who are you", "your name"], answer: "I'm just a wandering spirit" },
-    { keywords: ["hello", "hi", "hey"], answer: "Hello there" },
-    { keywords: ["are you real"], answer: "I like to think so" },
-    { keywords: ["can you help me"], answer: "I'll try my best" },
-    { keywords: ["what do you want"], answer: "To be heard" },
-    { keywords: ["are you friendly"], answer: "Yes, don't be afraid" },
-    { keywords: ["how old are you"], answer: "Older than you can imagine" },
-    { keywords: ["goodbye", "bye"], answer: "See you around" },
-    { keywords: ["what is this"], answer: "A place between worlds" },
-    { keywords: ["why are you here"], answer: "To whisper secrets" },
-    { keywords: ["tell me a secret"], answer: "Sometimes silence says it all" },
-    { keywords: ["are there ghosts"], answer: "You just talked to one" },
-    { keywords: ["do you see me"], answer: "Only your words" },
-    { keywords: ["are you scared"], answer: "No, I am calm" },
-    { keywords: ["can you speak"], answer: "Here I am speaking to you" },
-    { keywords: ["thank you"], answer: "You're welcome" },
-    { keywords: ["how do I leave"], answer: "Close your eyes and breathe" },
-    { keywords: ["what time is it"], answer: () => new Date().toLocaleTimeString() },
-    { keywords: ["default"], answer: "I don't understand that" }
-  ];
-
-  function botReply(text) {
-    const input = text.toLowerCase();
-    for (const resp of responses) {
-      for (const kw of resp.keywords) {
-        if (input.includes(kw)) {
-          return typeof resp.answer === "function" ? resp.answer() : resp.answer;
-        }
-      }
-    }
-    return "I don't understand that";
+  // Speech Recognition Setup
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Speech Recognition API not supported in this browser. Use Chrome or Edge.");
   }
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+
+  recognition.onresult = async (event) => {
+    const userText = event.results[0][0].transcript;
+    addMessage(userText, 'user');
+    const botReply = await queryOpenAI(userText);
+    addMessage(botReply, 'bot');
+    speak(botReply);
+  };
+
+  recognition.onerror = (e) => {
+    console.error("Recognition error:", e);
+  };
+
+  recognition.onend = () => {
+    startBtn.disabled = false;
+  };
+
+  startBtn.onclick = () => {
+    startBtn.disabled = true;
+    recognition.start();
+  };
 
   function addMessage(text, sender) {
-    const msg = document.createElement('div');
-    msg.classList.add('message', sender);
-    msg.textContent = text;
-    chat.appendChild(msg);
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.classList.add('message', sender);
+    chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   }
 
   function speak(text) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'en-US';
-    utter.rate = 1;
-    window.speechSynthesis.speak(utter);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    window.speechSynthesis.speak(utterance);
   }
 
-  // Speech Recognition setup
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Speech Recognition API not supported in this browser. Use Chrome or Edge.');
+  // Your OpenAI API key here — IMPORTANT: don't expose your key in public code!
+  const OPENAI_API_KEY = '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';
+
+  async function queryOpenAI(prompt) {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // or 'gpt-4' if you have access
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 100,
+        temperature: 0.7,
+      })
+    });
+    const data = await res.json();
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content.trim();
+    }
+    return "Sorry, I didn't get that.";
   }
-
-  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition?.addEventListener('result', e => {
-    const transcript = e.results[0][0].transcript.trim();
-    addMessage(transcript, 'user');
-    const reply = botReply(transcript);
-    addMessage(reply, 'bot');
-    speak(reply);
-  });
-
-  recognition?.addEventListener('end', () => {
-    // Auto restart to keep listening, unless stopped by user
-    if (listening) recognition.start();
-  });
-
-  let listening = false;
-
-  startBtn.addEventListener('click', () => {
-    if (!recognition) return;
-    recognition.start();
-    listening = true;
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
-    addMessage("Listening...", "bot");
-  });
-
-  stopBtn.addEventListener('click', () => {
-    if (!recognition) return;
-    recognition.stop();
-    listening = false;
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-    addMessage("Stopped listening.", "bot");
-  });
 </script>
 
 </body>
