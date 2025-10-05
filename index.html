@@ -1,138 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI Ghost Chat with Voice</title>
-<style>
-  body {
-    background: #000;
-    color: #0f0;
-    font-family: monospace;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-  }
-  #chat {
-    width: 400px;
-    height: 300px;
-    overflow-y: auto;
-    background: #111;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px #0f0;
-    margin-bottom: 15px;
-  }
-  .message {
-    margin: 8px 0;
-  }
-  .user {
-    text-align: right;
-    color: #6f6;
-  }
-  .bot {
-    text-align: left;
-  }
-  button {
-    padding: 10px 20px;
-    background: #0f0;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DonutSMP Wiki</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    header {
+      background: #422d6a;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 2.5em;
+      letter-spacing: 2px;
+    }
+    nav {
+      background: #2e1d4f;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 12px 0;
+    }
+    nav a {
+      color: #ddd;
+      text-decoration: none;
+      padding: 8px 16px;
+      transition: background 0.3s, color 0.3s;
+      border-radius: 6px;
+    }
+    nav a:hover {
+      background: #5c3c99;
+      color: #fff;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #422d6a;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background: #422d6a;
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    tr:hover {
+      background: #e8e0f5;
+    }
+    ul {
+      margin-left: 20px;
+      line-height: 1.6em;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #2e1d4f;
+      color: #ddd;
+      margin-top: 40px;
+    }
+  </style>
 </head>
 <body>
+  <header>🍩 DonutSMP Wiki</header>
 
-<h1>AI Ghost Chat (Voice)</h1>
-<div id="chat"></div>
-<button id="startBtn">Start Listening</button>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#commands">Commands</a>
+    <a href="#economy">Economy</a>
+    <a href="#rules">Rules</a>
+    <a href="#about">About</a>
+  </nav>
 
-<script>
-  const chat = document.getElementById('chat');
-  const startBtn = document.getElementById('startBtn');
+  <div class="container" id="home">
+    <h2>Welcome</h2>
+    <p style="text-align:center;">
+      This is the Donut SMP official-style wiki. You’ll find commands, economy info, rules, and more.
+    </p>
+  </div>
 
-  // Speech Recognition Setup
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert("Speech Recognition API not supported in this browser. Use Chrome or Edge.");
-  }
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
+  <div class="container" id="commands">
+    <h2>Commands</h2>
+    <table>
+      <tr>
+        <th>Command</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>/tpa &lt;player&gt;</td>
+        <td>Send a teleport request to another player.</td>
+      </tr>
+      <tr>
+        <td>/tpahere &lt;player&gt;</td>
+        <td>Request that a player teleport to you.</td>
+      </tr>
+      <tr>
+        <td>/tpaccept [player]</td>
+        <td>Accept a teleport request.</td>
+      </tr>
+      <tr>
+        <td>/tpdeny [player]</td>
+        <td>Deny a teleport request.</td>
+      </tr>
+      <tr>
+        <td>/tpacancel</td>
+        <td>Cancel your outgoing teleport request.</td>
+      </tr>
+      <tr>
+        <td>/order</td>
+        <td>Place buy or sell orders for items.</td>
+      </tr>
+      <tr>
+        <td>/sell</td>
+        <td>Sell an item to the server or market.</td>
+      </tr>
+      <tr>
+        <td>/ah</td>
+        <td>Open the Auction House interface.</td>
+      </tr>
+      <tr>
+        <td>/duel &lt;player&gt;</td>
+        <td>Challenge another player to a duel.</td>
+      </tr>
+      <tr>
+        <td>/settings</td>
+        <td>Opens Settings.</td>
+      </tr>
+      <tr>
+        <td>/spawn</td>
+        <td>Teleport to the spawn location.</td>
+      </tr>
+    </table>
+  </div>
 
-  recognition.onresult = async (event) => {
-    const userText = event.results[0][0].transcript;
-    addMessage(userText, 'user');
-    const botReply = await queryOpenAI(userText);
-    addMessage(botReply, 'bot');
-    speak(botReply);
-  };
+  <div class="container" id="economy">
+    <h2>Economy & Currency</h2>
+    <p>
+      The Donut SMP economy is player-driven and competitive.  
+      <strong>Money</strong> is used to buy, sell, and trade items, while <strong>Shards</strong> can be earned through kills, AFK rewards, or events.
+    </p>
+    <ul>
+      <li>Sell items with <code>/sell</code> or via the <code>/ah</code> Auction House.</li>
+      <li>Use <code>/order</code> to place buy/sell orders for specific items.</li>
+      <li>Some items require Shards instead of cash.</li>
+    </ul>
+  </div>
 
-  recognition.onerror = (e) => {
-    console.error("Recognition error:", e);
-  };
+  <div class="container" id="rules">
+    <h2>Rules</h2>
+    <p>These are the general Donut SMP rules (simplified):</p>
+    <ul>
+      <li>No hacking, cheating, or exploiting bugs.</li>
+      <li>Do not grief or steal from others’ claims.</li>
+      <li>No harassment, hate speech, or toxic behavior in chat.</li>
+      <li>No advertising other servers.</li>
+      <li>Respect staff and follow their directions.</li>
+      <li>Play fair and have fun!</li>
+    </ul>
+  </div>
 
-  recognition.onend = () => {
-    startBtn.disabled = false;
-  };
+  <div class="container" id="about">
+    <h2>About Donut SMP</h2>
+    <p>
+      Donut SMP is a competitive survival Minecraft server featuring an economy, teleport requests, PvP, and duels.  
+      Players can build, trade, and battle for dominance. Always check the official <strong>donutsmp.net</strong> for the latest updates and rule changes.
+    </p>
+  </div>
 
-  startBtn.onclick = () => {
-    startBtn.disabled = true;
-    recognition.start();
-  };
-
-  function addMessage(text, sender) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    div.classList.add('message', sender);
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  function speak(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-  }
-
-  // Replace this with your own OpenAI API key:
-  const OPENAI_API_KEY = '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';
-
-  async function queryOpenAI(prompt) {
-    try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${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}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 100,
-          temperature: 0.7,
-        })
-      });
-      const data = await res.json();
-      if (data.choices && data.choices.length > 0) {
-        return data.choices[0].message.content.trim();
-      }
-      return "Sorry, I didn't get that.";
-    } catch (error) {
-      console.error('OpenAI API error:', error);
-      return "Sorry, something went wrong.";
-    }
-  }
-</script>
-
+  <footer>
+    © 2025 DonutSMP Wiki — Unofficial Fan Resource
+  </footer>
 </body>
 </html>
-
-
