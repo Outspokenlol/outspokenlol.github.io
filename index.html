@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>YouTube Downloader</title>
+
+<style>
+body {
+  background: #0a0a0a;
+  color: #eee;
+  font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.container {
+  width: 400px;
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #111;
+  border: 1px solid #333;
+  color: white;
+}
+
+button {
+  width: 48%;
+  padding: 12px;
+  margin: 5px 1%;
+  background: #222;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #333;
+}
+
+#status {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>YouTube Downloader</h2>
+
+  <input id="urlInput" placeholder="Paste YouTube URL here..." />
+
+  <div>
+    <button onclick="download('mp3')">MP3</button>
+    <button onclick="download('mp4')">MP4</button>
+  </div>
+
+  <div id="status">Ready.</div>
+</div>
+
+<script>
+const statusText = document.getElementById('status');
+
+function setStatus(text) {
+  statusText.textContent = text;
+}
+
+function isValidYouTubeUrl(url) {
+  return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
+}
+
+function download(format) {
+  const url = document.getElementById('urlInput').value.trim();
+
+  if (!url) {
+    setStatus('Enter a URL first.');
+    return;
+  }
+
+  if (!isValidYouTubeUrl(url)) {
+    setStatus('Invalid YouTube URL.');
+    return;
+  }
+
+  setStatus(`Downloading ${format.toUpperCase()}...`);
+
+  fetch('http://localhost:3000/api/download', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ url, format })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error();
+    return res.blob();
+  })
+  .then(blob => {
+    const a = document.createElement('a');
+    const fileURL = URL.createObjectURL(blob);
+
+    a.href = fileURL;
+    a.download = format === 'mp3' ? 'audio.mp3' : 'video.mp4';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(fileURL);
+
+    setStatus('Download complete.');
+  })
+  .catch(() => {
+    setStatus('Download failed.');
+  });
+}
+</script>
+
+</body>
+</html>
