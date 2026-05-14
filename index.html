@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VENOM — Static Malware Analyzer</title>
+    <meta name="description" content="Client-side static malware analysis tool with Discord webhook detection and deletion.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scan-line"></div>
+    <div class="grid-bg"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>VENOM</h1>
+                    <span class="logo-sub">Static Malware Analyzer</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-dot"></div>
+                <span>CLIENT-SIDE • NO UPLOAD</span>
+            </div>
+        </header>
+
+        <!-- Upload Zone -->
+        <section id="upload-section" class="upload-section">
+            <div class="upload-zone" id="dropZone">
+                <div class="upload-icon">
+                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="8" y="8" width="48" height="48" rx="4" stroke-dasharray="4 4"/>
+                        <path d="M32 20v24M20 32l12-12 12 12"/>
+                    </svg>
+                </div>
+                <div class="upload-text">
+                    <p class="upload-primary">Drop file here or <label for="fileInput" class="upload-browse">browse</label></p>
+                    <p class="upload-secondary">.jar .exe .py .js .bat .ps1 .vbs — any suspicious file</p>
+                    <p class="upload-hint">Full JAR decompilation • Minecraft RAT detection • Webhook extraction</p>
+                </div>
+                <input type="file" id="fileInput" hidden>
+            </div>
+        </section>
+
+        <!-- Analysis Results -->
+        <section id="results-section" class="results-section hidden">
+            <!-- File Info Card -->
+            <div class="card file-info-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                    </div>
+                    <h2>File Intelligence</h2>
+                </div>
+                <div class="file-meta-grid" id="fileMeta">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Threat Assessment -->
+            <div class="card threat-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </div>
+                    <h2>Threat Assessment</h2>
+                </div>
+                <div class="threat-gauge-container">
+                    <div class="threat-gauge" id="threatGauge">
+                        <div class="gauge-fill" id="gaugeFill"></div>
+                    </div>
+                    <div class="threat-label" id="threatLabel">ANALYZING...</div>
+                    <div class="threat-score" id="threatScore">—</div>
+                </div>
+                <div class="threat-tags" id="threatTags">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Detections -->
+            <div class="card detections-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <h2>Detections</h2>
+                    <span class="detection-count" id="detectionCount">0</span>
+                </div>
+                <div class="detections-list" id="detectionsList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Discord Webhooks -->
+            <div class="card webhooks-card hidden" id="webhooksCard">
+                <div class="card-header">
+                    <div class="card-icon webhook-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+                        </svg>
+                    </div>
+                    <h2>Discord Webhooks Found</h2>
+                    <span class="webhook-count" id="webhookCount">0</span>
+                </div>
+                <div class="webhooks-list" id="webhooksList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- JAR Structure -->
+            <div class="card jar-card hidden" id="jarCard">
+                <div class="card-header">
+                    <div class="card-icon jar-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                    </div>
+                    <h2>JAR Structure</h2>
+                    <span class="jar-file-count" id="jarFileCount">0</span>
+                </div>
+                <div class="jar-meta-row" id="jarMetaRow"></div>
+                <div class="jar-tree" id="jarTree">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Strings -->
+            <div class="card strings-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <polyline points="4 7 4 4 20 4 20 7"/>
+                            <line x1="9" y1="20" x2="15" y2="20"/>
+                            <line x1="12" y1="4" x2="12" y2="20"/>
+                        </svg>
+                    </div>
+                    <h2>Extracted Strings</h2>
+                    <span class="string-count" id="stringCount">0</span>
+                </div>
+                <div class="strings-container" id="stringsContainer">
+                    <div class="strings-filter">
+                        <input type="text" id="stringsFilter" placeholder="Filter strings..." class="filter-input">
+                    </div>
+                    <div class="strings-list" id="stringsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Scan Button -->
+            <button class="new-scan-btn" id="newScanBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                New Scan
+            </button>
+        </section>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
